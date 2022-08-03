@@ -75,12 +75,14 @@ class Model {
    */
   ~Model();
 
-  std::map<std::string,
-           std::variant<Junction<T>, BloodVessel<T>, FlowReferenceBC<T>,
+  ///< Elements of the model
+
+  std::map<std::string, std::variant<Junction<T>, BloodVessel<T>, FlowReferenceBC<T>,
                         PressureReferenceBC<T>, WindkesselBC<T>,
-                        ResistanceBC<T>, OpenLoopCoronaryBC<T>>>
-      blocks;             ///< Elements of the model
+                        ResistanceBC<T>, OpenLoopCoronaryBC<T>>> blocks;    
+
   DOFHandler dofhandler;  ///< Degree-of-freedom handler of the model
+
   std::list<Node> nodes;  ///< Nodes of the model
 
   /**
@@ -156,7 +158,13 @@ template <typename T>
 Model<T>::Model() {}
 
 template <typename T>
-Model<T>::~Model() {}
+Model<T>::~Model() 
+{
+  std::cout << "[Model] ----- dtor -----" << std::endl;
+  for (auto& node : nodes) {
+    std::cout << "[Model] node.flow_dof: " << node.flow_dof << std::endl;
+  }
+}
 
 template <typename T>
 void Model<T>::update_constant(ALGEBRA::DenseSystem<T> &system) {
@@ -175,8 +183,10 @@ void Model<T>::update_time(ALGEBRA::DenseSystem<T> &system, T time) {
 }
 
 template <typename T>
-void Model<T>::update_solution(ALGEBRA::DenseSystem<T> &system,
-                               Eigen::Matrix<T, Eigen::Dynamic, 1> &y) {
+void Model<T>::update_solution(ALGEBRA::DenseSystem<T> &system, Eigen::Matrix<T, Eigen::Dynamic, 1> &y) 
+{
+  std::cout << "[model] update_solution 1 " << std::endl;
+
   for (auto &&elem : blocks) {
     std::visit([&](auto &&block) { block.update_solution(system, y); },
                elem.second);
@@ -184,7 +194,9 @@ void Model<T>::update_solution(ALGEBRA::DenseSystem<T> &system,
 }
 
 template <typename T>
-void Model<T>::update_constant(ALGEBRA::SparseSystem<T> &system) {
+void Model<T>::update_constant(ALGEBRA::SparseSystem<T> &system) 
+{
+  std::cout << "[model] update_solution 2 " << std::endl;
   for (auto &&elem : blocks) {
     std::visit([&](auto &&block) { block.update_constant(system); },
                elem.second);
@@ -200,11 +212,12 @@ void Model<T>::update_time(ALGEBRA::SparseSystem<T> &system, T time) {
 }
 
 template <typename T>
-void Model<T>::update_solution(ALGEBRA::SparseSystem<T> &system,
-                               Eigen::Matrix<T, Eigen::Dynamic, 1> &y) {
+void Model<T>::update_solution(ALGEBRA::SparseSystem<T> &system, Eigen::Matrix<T, Eigen::Dynamic, 1> &y) 
+{
+  std::cout << "[model] update_solution 3 " << std::endl;
+
   for (auto &&elem : blocks) {
-    std::visit([&](auto &&block) { block.update_solution(system, y); },
-               elem.second);
+    std::visit([&](auto &&block) { block.update_solution(system, y); }, elem.second);
   }
 }
 

@@ -135,22 +135,35 @@ template <typename T>
 SparseSystem<T>::~SparseSystem() {}
 
 template <typename T>
-void SparseSystem<T>::reserve(MODEL::Model<T> &model) {
+void SparseSystem<T>::reserve(MODEL::Model<T> &model) 
+{
+  std::cout << "[SparseSystem<T>::reserve] " << std::endl;
+
   auto num_triplets = model.get_num_triplets();
+
   F.reserve(num_triplets["F"]);
   E.reserve(num_triplets["E"]);
   D.reserve(num_triplets["D"]);
   model.update_constant(*this);
   model.update_time(*this, 0.0);
-  Eigen::Matrix<T, Eigen::Dynamic, 1> dummy_y =
-      Eigen::Matrix<T, Eigen::Dynamic, 1>::Ones(residual.size());
+
+  std::cout << "[SparseSystem<T>::reserve] residual.size(): " << residual.size() << std::endl;
+
+  Eigen::Matrix<T, Eigen::Dynamic, 1> dummy_y = Eigen::Matrix<T, Eigen::Dynamic, 1>::Ones(residual.size());
+
+  std::cout << "[SparseSystem<T>::reserve] Update solution ... " << std::endl;
   model.update_solution(*this, dummy_y);
+
+  std::cout << "[SparseSystem<T>::reserve] Compress ... " << std::endl;
   F.makeCompressed();
   E.makeCompressed();
   D.makeCompressed();
+
+  //std::cout << "[SparseSystem<T>::reserve] jacobian.reserve ... " << std::endl;
   jacobian.reserve(num_triplets["F"] + num_triplets["E"]);  // Just an estimate
   update_jacobian(1.0);  // Update it once to have sparsity pattern
   jacobian.makeCompressed();
+
   solver->analyzePattern(jacobian);  // Let solver analyze pattern
 }
 

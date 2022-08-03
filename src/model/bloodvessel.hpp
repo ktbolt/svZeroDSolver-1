@@ -257,7 +257,8 @@ void BloodVessel<T>::update_solution(ALGEBRA::DenseSystem<T> &system,
 }
 
 template <typename T>
-void BloodVessel<T>::update_constant(ALGEBRA::SparseSystem<T> &system) {
+void BloodVessel<T>::update_constant(ALGEBRA::SparseSystem<T> &system) 
+{
   system.E.coeffRef(this->global_eqn_ids[0], this->global_var_ids[3]) =
       -params.L;
   system.E.coeffRef(this->global_eqn_ids[1], this->global_var_ids[4]) =
@@ -278,15 +279,26 @@ void BloodVessel<T>::update_constant(ALGEBRA::SparseSystem<T> &system) {
 }
 
 template <typename T>
-void BloodVessel<T>::update_solution(ALGEBRA::SparseSystem<T> &system,
-                                     Eigen::Matrix<T, Eigen::Dynamic, 1> &y) {
+void BloodVessel<T>::update_solution(ALGEBRA::SparseSystem<T> &system, Eigen::Matrix<T, Eigen::Dynamic, 1> &y) 
+{
+  std::cout << "[update_solution] " << std::endl;
+  std::cout << "[update_solution] this->inlet_nodes[0]: " << this->inlet_nodes[0] << std::endl;
+  std::cout << "[update_solution] this->inlet_nodes[0]->flow_dof: " << this->inlet_nodes[0]->flow_dof << std::endl;
+
   T q_in = fabs(y[this->inlet_nodes[0]->flow_dof]);
   T fac1 = -params.stenosis_coefficient * q_in;
   T fac2 = fac1 - params.R;
+  std::cout << "[update_solution] q_in: " << q_in << std::endl;
+
+  std::cout << "[update_solution] this->global_eqn_ids[0]: " << this->global_eqn_ids[0] << std::endl;
+  std::cout << "[update_solution] this->global_eqn_ids[2]: " << this->global_eqn_ids[2] << std::endl;
+  std::cout << "[update_solution] this->global_var_ids[1]: " << this->global_var_ids[1] << std::endl;
+
   system.F.coeffRef(this->global_eqn_ids[0], this->global_var_ids[1]) = fac2;
   system.F.coeffRef(this->global_eqn_ids[2], this->global_var_ids[1]) = fac2;
   system.D.coeffRef(this->global_eqn_ids[0], this->global_var_ids[1]) = fac1;
   system.D.coeffRef(this->global_eqn_ids[2], this->global_var_ids[1]) = fac1;
+  std::cout << "[update_solution] Done " << std::endl;
 }
 }  // namespace MODEL
 

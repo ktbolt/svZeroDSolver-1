@@ -256,14 +256,20 @@ MODEL::TimeDependentParameter<T> ConfigReader<T>::get_time_dependent_parameter(
 }
 
 template <typename T>
-MODEL::Model<T> ConfigReader<T>::get_model() {
+MODEL::Model<T> ConfigReader<T>::get_model() 
+{
+  std::cout << "[get_model] " << std::endl;
+  std::cout << "[get_model] ==========  ConfigReader<T>::get_model ==========" << std::endl;
+
   // Create blog mapping
+  std::cout << "[get_model] Create blog mapping ..." << std::endl;
   MODEL::Model<T> model;
 
   // Create list to store block connections while generating blocks
   std::vector<std::tuple<std::string, std::string>> connections;
 
   // Create junctions
+  std::cout << "[get_model] Create junctions ..." << std::endl;
   for (simdjson::dom::element junction_config : config["junctions"]) {
     if ((static_cast<std::string>(junction_config["junction_type"]) ==
          "NORMAL_JUNCTION") ||
@@ -294,6 +300,7 @@ MODEL::Model<T> ConfigReader<T>::get_model() {
   }
 
   // Create vessels
+  std::cout << "[get_model] Create vessels ..." << std::endl;
   std::list<std::string> bc_locations = {"inlet", "outlet"};
   for (simdjson::dom::element vessel_config : config["vessels"]) {
     simdjson::dom::element vessel_values =
@@ -406,6 +413,7 @@ MODEL::Model<T> ConfigReader<T>::get_model() {
   }
 
   // Create Connections
+  std::cout << "[get_model] Create connections ..." << std::endl;
   for (auto &connection : connections) {
     for (auto &[key, elem1] : model.blocks) {
       std::visit(
@@ -415,8 +423,10 @@ MODEL::Model<T> ConfigReader<T>::get_model() {
                   [&](auto &&ele2) {
                     if ((ele1.name == std::get<0>(connection)) &&
                         (ele2.name == std::get<1>(connection))) {
-                      model.nodes.push_back(
-                          MODEL::Node(ele1.name + "_" + ele2.name));
+                      std::cout << "[get_model] create node: " << ele1.name + "_" + ele2.name << std::endl;
+                      auto node =  MODEL::Node(ele1.name + "_" + ele2.name);
+                      model.nodes.push_back( node ); 
+                      //model.nodes.push_back( MODEL::Node(ele1.name + "_" + ele2.name));
                       DEBUG_MSG("Created node " << model.nodes.back().name);
                       ele1.outlet_nodes.push_back(&model.nodes.back());
                       ele2.inlet_nodes.push_back(&model.nodes.back());
@@ -433,6 +443,7 @@ MODEL::Model<T> ConfigReader<T>::get_model() {
     std::visit([&](auto &&block) { block.setup_dofs(model.dofhandler); }, elem);
   }
   model_created = true;
+  std::cout << "[get_model] Done " << std::endl;
   return model;
 }
 

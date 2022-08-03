@@ -42,6 +42,11 @@ else()
     add_executable(svzerodsolver src/main.cpp)
     pybind11_add_module(svzerodsolvercpp src/svzerodsolver.cpp)
 
+    add_subdirectory("src/interface")
+
+    #add_library(svzero_interface_library SHARED src/interface/interface.cpp)
+    #target_target_libraries( svzero_interface_library )
+
     target_link_libraries(svzerodsolver PRIVATE Eigen3::Eigen)
     target_link_libraries(svzerodsolver PRIVATE simdjson::simdjson)
     target_link_libraries(svzerodsolver PRIVATE jsoncpp)

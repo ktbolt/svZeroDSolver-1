@@ -216,10 +216,16 @@ class Block {
 };
 
 template <typename T>
-Block<T>::Block() {}
+Block<T>::Block() {
+  //std::cout << "[Block] ------ ctor -----" << std::endl;
+  //std::cout << "[Block] this: " << this << std::endl;
+}
 
 template <typename T>
 Block<T>::Block(std::string name) {
+  //std::cout << "[Block] ------ ctor -----" << std::endl;
+  //std::cout << "[Block] this: " << this << std::endl;
+  //std::cout << "[Block] name: " << name << std::endl;
   this->name = name;
 }
 

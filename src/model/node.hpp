@@ -55,6 +55,10 @@ class Node {
    */
   Node(std::string name);
 
+  Node() { 
+    std::cout << "[Node] ++++++ ctor +++++" << std::endl;
+  }
+
   /**
    * @brief Destroy the Node object
    *
@@ -78,11 +82,21 @@ class Node {
   void setup_dofs(DOFHandler &dofhandler);
 };
 
-Node::Node(std::string name) { this->name = name; }
+Node::Node(std::string name) { 
+  std::cout << "[Node] ++++++ ctor +++++" << std::endl;
+  std::cout << "[Node] this: " << this << std::endl;
+  std::cout << "[Node] name: " << name << std::endl;
+  this->name = name; 
+}
 
-Node::~Node() {}
+Node::~Node() {
+  std::cout << "[Node] ------ dtor -----" << std::endl;
+  std::cout << "[Node] this: " << this << std::endl;
+  std::cout << "[Node] name: " << name << std::endl;
+}
 
-void Node::setup_dofs(DOFHandler &dofhandler) {
+void Node::setup_dofs(DOFHandler &dofhandler) 
+{
   flow_dof = dofhandler.register_variable("Q_" + name);
   pres_dof = dofhandler.register_variable("P_" + name);
 }
