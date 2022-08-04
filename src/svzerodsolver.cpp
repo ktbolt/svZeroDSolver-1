@@ -57,7 +57,7 @@ const std::string run(std::string &json_config) {
   // Create model
   DEBUG_MSG("Creating model");
   auto model = config.get_model();
-  DEBUG_MSG("Size of system:      " << model.dofhandler.size());
+  DEBUG_MSG("Size of system:      " << model->dofhandler.size());
 
   // Get simulation parameters
   DEBUG_MSG("Setup simulutation");
@@ -78,24 +78,24 @@ const std::string run(std::string &json_config) {
 
   // Setup system
   DEBUG_MSG("Starting simulation");
-  ALGEBRA::State<T> state = ALGEBRA::State<T>::Zero(model.dofhandler.size());
+  ALGEBRA::State<T> state = ALGEBRA::State<T>::Zero(model->dofhandler.size());
 
   // Create steady initial
   if (steady_initial) {
     DEBUG_MSG("Calculating steady initial condition");
     T time_step_size_steady = config.cardiac_cycle_period / 10.0;
     auto model_steady = config.get_model();
-    model_steady.to_steady();
-    ALGEBRA::Integrator<T, S> integrator_steady(model_steady,
+    model_steady->to_steady();
+    ALGEBRA::Integrator<T, S> integrator_steady(*model_steady,
                                                 time_step_size_steady, 0.1,
                                                 absolute_tolerance, max_nliter);
     for (size_t i = 0; i < 31; i++) {
       state = integrator_steady.step(state, time_step_size_steady * T(i),
-                                     model_steady);
+                                     *model_steady);
     }
   }
 
-  ALGEBRA::Integrator<T, S> integrator(model, time_step_size, 0.1,
+  ALGEBRA::Integrator<T, S> integrator(*model, time_step_size, 0.1,
                                        absolute_tolerance, max_nliter);
 
   std::vector<ALGEBRA::State<T>> states;
@@ -110,7 +110,7 @@ const std::string run(std::string &json_config) {
 
   int interval_counter = 0;
   for (size_t i = 1; i < num_time_steps; i++) {
-    state = integrator.step(state, time, model);
+    state = integrator.step(state, time, *model);
     interval_counter += 1;
     time = time_step_size * T(i);
     if (interval_counter == output_interval) {
@@ -121,7 +121,7 @@ const std::string run(std::string &json_config) {
   }
   DEBUG_MSG("Simulation completed");
 
-  return IO::write_csv<T>(times, states, model, output_mean_only);
+  return IO::write_csv<T>(times, states, *model, output_mean_only);
 }
 
 PYBIND11_MODULE(svzerodsolvercpp, mod) {

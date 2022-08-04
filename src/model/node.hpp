@@ -56,7 +56,7 @@ class Node {
   Node(std::string name);
 
   Node() { 
-    std::cout << "[Node] ++++++ ctor +++++" << std::endl;
+    //std::cout << "[Node] ++++++ ctor +++++" << std::endl;
   }
 
   /**
@@ -83,16 +83,16 @@ class Node {
 };
 
 Node::Node(std::string name) { 
-  std::cout << "[Node] ++++++ ctor +++++" << std::endl;
-  std::cout << "[Node] this: " << this << std::endl;
-  std::cout << "[Node] name: " << name << std::endl;
+  //std::cout << "[Node] ++++++ ctor +++++" << std::endl;
+  //std::cout << "[Node] this: " << this << std::endl;
+  //std::cout << "[Node] name: " << name << std::endl;
   this->name = name; 
 }
 
 Node::~Node() {
-  std::cout << "[Node] ------ dtor -----" << std::endl;
-  std::cout << "[Node] this: " << this << std::endl;
-  std::cout << "[Node] name: " << name << std::endl;
+  //std::cout << "[Node] ------ dtor -----" << std::endl;
+  //std::cout << "[Node] this: " << this << std::endl;
+  //std::cout << "[Node] name: " << name << std::endl;
 }
 
 void Node::setup_dofs(DOFHandler &dofhandler) 

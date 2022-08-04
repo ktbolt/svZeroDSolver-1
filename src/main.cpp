@@ -42,6 +42,7 @@
 #include "io/jsonwriter.hpp"
 #include "model/model.hpp"
 
+//typedef float T;
 typedef double T;
 
 template <typename TT>
@@ -50,7 +51,7 @@ using S = ALGEBRA::SparseSystem<TT>;
 template <typename T>
 class MainTest {
   public:
-    MODEL::Model<T> model;
+    MODEL::Model<T>* model;
 };
 
 /**
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
   mtest.model = config.get_model();
   auto model = mtest.model;
   //auto model = config.get_model();
-  std::cout << "Size of system: " << model.dofhandler.size() << std::endl;
+  std::cout << "Size of system: " << model->dofhandler.size() << std::endl;
 
   // Get simulation parameters
   std::cout << std::endl;
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
 
   // Setup system
   std::cout << "Starting simulutation ..." << std::endl;
-  ALGEBRA::State<T> state = ALGEBRA::State<T>::Zero(model.dofhandler.size());
+  ALGEBRA::State<T> state = ALGEBRA::State<T>::Zero(model->dofhandler.size());
 
   // Create steady initial
   if (steady_initial) {
@@ -121,28 +122,27 @@ int main(int argc, char *argv[])
     std::cout << "------ Calculating steady initial condition ------ " << std::endl;
     T time_step_size_steady = config.cardiac_cycle_period / 10.0;
     auto model_steady = config.get_model();
-    model_steady.to_steady();
-    ALGEBRA::Integrator<T, S> integrator_steady(model_steady, time_step_size_steady, 0.1, absolute_tolerance, max_nliter);
+    model_steady->to_steady();
+    ALGEBRA::Integrator<T, S> integrator_steady(*model_steady, time_step_size_steady, 0.1, absolute_tolerance, max_nliter);
 
     for (size_t i = 0; i < 31; i++) {
-      state = integrator_steady.step(state, time_step_size_steady * T(i),
-                                     model_steady);
+      state = integrator_steady.step(state, time_step_size_steady * T(i), *model_steady);
     }
     std::cout << "... done Calculating steady initial condition" << std::endl;
   }
   std::cout << std::endl;
   std::cout << "[main] ----- model inlet_nodes -----" << std::endl;
-  for (auto& node : model.nodes) {
+  for (auto& node : model->nodes) {
     std::cout << "[main] node.flow_dof: " << node.flow_dof << std::endl;
   }
 
   std::cout << std::endl;
   std::cout << "Create integrator ..." << std::endl;
-  ALGEBRA::Integrator<T, S> integrator(model, time_step_size, 0.1, absolute_tolerance, max_nliter);
+  ALGEBRA::Integrator<T, S> integrator(*model, time_step_size, 0.1, absolute_tolerance, max_nliter);
 
   std::cout << std::endl;
   std::cout << "[main] ----- model inlet_nodes -----" << std::endl;
-  for (auto& node : model.nodes) {
+  for (auto& node : model->nodes) {
     std::cout << "[main] node.flow_dof: " << node.flow_dof << std::endl;
   }
 
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
   std::cout << "------ Do simulation ------ " << std::endl;
   int interval_counter = 0;
   for (size_t i = 1; i < num_time_steps; i++) {
-    state = integrator.step(state, time, model);
+    state = integrator.step(state, time, *model);
     interval_counter += 1;
     time = time_step_size * T(i);
     /*
@@ -182,10 +182,10 @@ int main(int argc, char *argv[])
   std::string output;
   if (HELPERS::endswith(output_file, ".csv")) {
     DEBUG_MSG("Saving csv result file to " << output_file);
-    output = IO::write_csv<T>(times, states, model, output_mean_only);
+    output = IO::write_csv<T>(times, states, *model, output_mean_only);
   } else if (HELPERS::endswith(output_file, ".json")) {
     DEBUG_MSG("Saving json result file to " << output_file);
-    output = IO::write_json<T>(times, states, model);
+    output = IO::write_json<T>(times, states, *model);
   } else {
     throw std::runtime_error("Unsupported outfile file format.");
   }

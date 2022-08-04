@@ -78,7 +78,7 @@ class ConfigReader {
    *
    * @return Model
    */
-  MODEL::Model<T> get_model();
+  MODEL::Model<T>* get_model();
 
   /**
    * @brief Get number of time steps based on configuration
@@ -256,20 +256,19 @@ MODEL::TimeDependentParameter<T> ConfigReader<T>::get_time_dependent_parameter(
 }
 
 template <typename T>
-MODEL::Model<T> ConfigReader<T>::get_model() 
+MODEL::Model<T>* ConfigReader<T>::get_model() 
 {
-  std::cout << "[get_model] " << std::endl;
-  std::cout << "[get_model] ==========  ConfigReader<T>::get_model ==========" << std::endl;
+  //std::cout << "[get_model] " << std::endl;
+  //std::cout << "[get_model] ==========  ConfigReader<T>::get_model ==========" << std::endl;
 
   // Create blog mapping
-  std::cout << "[get_model] Create blog mapping ..." << std::endl;
-  MODEL::Model<T> model;
+  MODEL::Model<T>* model = new MODEL::Model<T>();
 
   // Create list to store block connections while generating blocks
   std::vector<std::tuple<std::string, std::string>> connections;
 
   // Create junctions
-  std::cout << "[get_model] Create junctions ..." << std::endl;
+  //std::cout << "[get_model] Create junctions ..." << std::endl;
   for (simdjson::dom::element junction_config : config["junctions"]) {
     if ((static_cast<std::string>(junction_config["junction_type"]) ==
          "NORMAL_JUNCTION") ||
@@ -278,7 +277,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
       // Create the junction and add to blocks
       std::string junction_name =
           static_cast<std::string>(junction_config["junction_name"]);
-      model.blocks.insert({junction_name, MODEL::Junction<T>(junction_name)});
+      model->blocks.insert({junction_name, MODEL::Junction<T>(junction_name)});
 
       // Check for connections to inlet and outlet vessels and append to
       // connections list
@@ -300,7 +299,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
   }
 
   // Create vessels
-  std::cout << "[get_model] Create vessels ..." << std::endl;
+  //std::cout << "[get_model] Create vessels ..." << std::endl;
   std::list<std::string> bc_locations = {"inlet", "outlet"};
   for (simdjson::dom::element vessel_config : config["vessels"]) {
     simdjson::dom::element vessel_values =
@@ -315,7 +314,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
       T L = get_default(vessel_values, "L", 0.0),
         stenosis_coefficient =
             get_default(vessel_values, "stenosis_coefficient", 0.0);
-      model.blocks.insert(
+      model->blocks.insert(
           {vessel_name,
            MODEL::BloodVessel<T>(R = R, C = C, L = L,
                                  stenosis_coefficient = stenosis_coefficient,
@@ -341,7 +340,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
               if (static_cast<std::string>(bc_config["bc_type"]) == "RCR") {
                 T Rp = bc_values["Rp"], C = bc_values["C"],
                   Rd = bc_values["Rd"], Pd = bc_values["Pd"];
-                model.blocks.insert(
+                model->blocks.insert(
                     {bc_name, MODEL::WindkesselBC<T>(Rp = Rp, C = C, Rd = Rd,
                                                      Pd = Pd, bc_name)});
                 DEBUG_MSG("Created boundary condition " << bc_name);
@@ -352,7 +351,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
                                            bc_values, "t",
                                            simdjson::dom::element());
                 auto Q = get_time_dependent_parameter(t_json, Q_json);
-                model.blocks.insert(
+                model->blocks.insert(
                     {bc_name, MODEL::FlowReferenceBC<T>(Q = Q, bc_name)});
                 DEBUG_MSG("Created boundary condition " << bc_name);
               } else if (static_cast<std::string>(bc_config["bc_type"]) ==
@@ -363,7 +362,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
                     get_default(bc_values, "t", simdjson::dom::element());
                 auto R = get_time_dependent_parameter(t_json, R_json);
                 auto Pd = get_time_dependent_parameter(t_json, Pd_json);
-                model.blocks.insert(
+                model->blocks.insert(
                     {bc_name, MODEL::ResistanceBC<T>(R = R, Pd = Pd, bc_name)});
                 DEBUG_MSG("Created boundary condition " << bc_name);
               } else if (static_cast<std::string>(bc_config["bc_type"]) ==
@@ -375,7 +374,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
                 if (P.isconstant == false) {
                   cardiac_cycle_period = P.cycle_period;
                 }
-                model.blocks.insert(
+                model->blocks.insert(
                     {bc_name, MODEL::PressureReferenceBC<T>(P = P, bc_name)});
                 DEBUG_MSG("Created boundary condition " << bc_name);
               } else if (static_cast<std::string>(bc_config["bc_type"]) ==
@@ -389,7 +388,7 @@ MODEL::Model<T> ConfigReader<T>::get_model()
                     get_default(bc_values, "t", simdjson::dom::element());
                 auto Pim = get_time_dependent_parameter(t_json, Pim_json);
                 auto Pv = get_time_dependent_parameter(t_json, Pv_json);
-                model.blocks.insert(
+                model->blocks.insert(
                     {bc_name, MODEL::OpenLoopCoronaryBC<T>(
                                   Ra = Ra, Ram = Ram, Rv = Rv, Ca = Ca,
                                   Cim = Cim, Pim = Pim, Pv = Pv, bc_name)});
@@ -413,24 +412,24 @@ MODEL::Model<T> ConfigReader<T>::get_model()
   }
 
   // Create Connections
-  std::cout << "[get_model] Create connections ..." << std::endl;
+  //std::cout << "[get_model] Create connections ..." << std::endl;
   for (auto &connection : connections) {
-    for (auto &[key, elem1] : model.blocks) {
+    for (auto &[key, elem1] : model->blocks) {
       std::visit(
           [&](auto &&ele1) {
-            for (auto &[key, elem2] : model.blocks) {
+            for (auto &[key, elem2] : model->blocks) {
               std::visit(
                   [&](auto &&ele2) {
                     if ((ele1.name == std::get<0>(connection)) &&
                         (ele2.name == std::get<1>(connection))) {
-                      std::cout << "[get_model] create node: " << ele1.name + "_" + ele2.name << std::endl;
+                      //std::cout << "[get_model] create node: " << ele1.name + "_" + ele2.name << std::endl;
                       auto node =  MODEL::Node(ele1.name + "_" + ele2.name);
-                      model.nodes.push_back( node ); 
+                      model->nodes.push_back( node ); 
                       //model.nodes.push_back( MODEL::Node(ele1.name + "_" + ele2.name));
-                      DEBUG_MSG("Created node " << model.nodes.back().name);
-                      ele1.outlet_nodes.push_back(&model.nodes.back());
-                      ele2.inlet_nodes.push_back(&model.nodes.back());
-                      model.nodes.back().setup_dofs(model.dofhandler);
+                      DEBUG_MSG("Created node " << model->nodes.back().name);
+                      ele1.outlet_nodes.push_back(&model->nodes.back());
+                      ele2.inlet_nodes.push_back(&model->nodes.back());
+                      model->nodes.back().setup_dofs(model->dofhandler);
                     }
                   },
                   elem2);
@@ -439,11 +438,11 @@ MODEL::Model<T> ConfigReader<T>::get_model()
           elem1);
     }
   }
-  for (auto &[key, elem] : model.blocks) {
-    std::visit([&](auto &&block) { block.setup_dofs(model.dofhandler); }, elem);
+  for (auto &[key, elem] : model->blocks) {
+    std::visit([&](auto &&block) { block.setup_dofs(model->dofhandler); }, elem);
   }
   model_created = true;
-  std::cout << "[get_model] Done " << std::endl;
+  //std::cout << "[get_model] Done " << std::endl;
   return model;
 }
 

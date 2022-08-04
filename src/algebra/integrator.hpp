@@ -135,17 +135,13 @@ Integrator<T, S>::Integrator(MODEL::Model<T> &model, T time_step_size, T rho,
   this->max_iter = max_iter;
   time_step_size_inv = 1.0 / time_step_size;
 
-  std::cout << "[Integrator] size: " << size << std::endl;
-
   y_af = Eigen::Matrix<T, Eigen::Dynamic, 1>(size);
   ydot_am = Eigen::Matrix<T, Eigen::Dynamic, 1>(size);
 
   y_dot_coeff = alpha_m * alpha_f_inv * gamma_inv * time_step_size_inv;
 
   // Make some memory reservations
-  std::cout << "[Integrator] Make some memory reservations ... " << std::endl;
   system.reserve(model);
-  std::cout << "[Integrator] ... done Make some memory reservations ... " << std::endl;
 }
 
 template <typename T, template <class> class S>
