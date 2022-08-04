@@ -170,6 +170,11 @@ int main(int argc, char *argv[])
     std::cout << "[main] state.y[1]: " << state.y[1] << std::endl;
     std::cout << "[main] state.y[2]: " << state.y[2] << std::endl;
     */
+    std::cout << "[main] time: " << time << "  state: "; 
+    for (auto value : state.y) {
+      std::cout << value << " "; 
+    }
+    std::cout << std::endl;
 
     if (interval_counter == output_interval) {
       times.push_back(time);

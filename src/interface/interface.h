@@ -31,7 +31,7 @@ class SolverInterface
     static int problem_id_count_;
     static std::map<int,SolverInterface*> interface_list_; 
 
-    int problem_id_;
+    int problem_id_ = 0;
     std::string input_file_name_;
 
     // Solver parameters.
@@ -44,19 +44,20 @@ class SolverInterface
     //
     // These are read in from the input JSON solver configuration file.
     //
-    double time_step_size_;
-    int num_time_steps_;
-    double absolute_tolerance_;
-    int max_nliter_;
+    double time_step_size_ = 0.0;
+    int num_time_steps_ = 0;
+    double absolute_tolerance_ = 0.0;
+    int max_nliter_ = 0;
 
     MODEL::Model<T>* model_;
     //ALGEBRA::Integrator<double,S>* integrator;
 
-    int time_step_;
-    std::vector<ALGEBRA::State<double>> states_;
+    int time_step_ = 0.0;
+    ALGEBRA::State<double> state_;
     std::vector<double> times_;
-    int save_interval_counter_;
-    int output_interval_;
+    int save_interval_counter_ = 0;
+    int output_interval_ = 0;
+    int system_size_ = 0;
 
 };
 

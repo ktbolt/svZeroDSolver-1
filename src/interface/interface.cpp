@@ -61,9 +61,9 @@ SolverInterface::~SolverInterface()
 //            Callible interface functions              //
 //////////////////////////////////////////////////////////
 
-extern "C" void initialize(const char* input_file, const double time_step, int& problem_id);
+extern "C" void initialize(const char* input_file, const double time_step, int& problem_id, int& system_size);
 
-extern "C" void increment_time(const int problem_id, const double time);
+extern "C" void increment_time(const int problem_id, const double time, std::vector<double>& solution);
 
 //------------
 // initialize
@@ -76,7 +76,7 @@ extern "C" void increment_time(const int problem_id, const double time);
 //
 //   problem_id: The returned ID used to identify the 0D problem (block).
 //
-void initialize(const char* input_file_arg, const double solver_time_step, int& problem_id)
+void initialize(const char* input_file_arg, const double solver_time_step, int& problem_id, int& system_size)
 {
   std::cout << "========== svzero initialize ==========" << std::endl;
   std::string input_file(input_file_arg);
@@ -94,7 +94,8 @@ void initialize(const char* input_file_arg, const double solver_time_step, int& 
   // Create a model.
   auto model = config.get_model();
   interface->model_ = model; 
-  std::cout << "[initialize] System size: " << model->dofhandler.size() << std::endl;
+  system_size = model->dofhandler.size();
+  std::cout << "[initialize] System size: " << system_size << std::endl;
 
   // Get simulation parameters from the input JSON file.
   //
@@ -138,10 +139,7 @@ void initialize(const char* input_file_arg, const double solver_time_step, int& 
     }
   }
 
-
-  interface->states_.push_back(state);
-  interface->times_.push_back(0.0);
-
+  interface->state_ = state;
   interface->time_step_ = 0;
   interface->save_interval_counter_ = 0;
   interface->output_interval_ = output_interval;
@@ -153,10 +151,10 @@ void initialize(const char* input_file_arg, const double solver_time_step, int& 
 // increment_time
 //----------------
 //
-void increment_time(const int problem_id, const double time)
+void increment_time(const int problem_id, const double time, std::vector<double>& solution)
 {
-  std::cout << "[increment_time] " << std::endl;
-  std::cout << "[increment_time] ========== svzero increment_time ==========" << std::endl;
+  //std::cout << "[increment_time] " << std::endl;
+  //std::cout << "[increment_time] ========== svzero increment_time ==========" << std::endl;
   auto interface = SolverInterface::interface_list_[problem_id];
   auto model = interface->model_;
 
@@ -164,16 +162,18 @@ void increment_time(const int problem_id, const double time)
   auto time_step_size = interface->time_step_size_;
   auto absolute_tolerance = interface->absolute_tolerance_;
   auto max_nliter = interface->max_nliter_;
-  std::cout << "[increment_time] time: " << time << std::endl;
+  //std::cout << "[increment_time] time: " << time << std::endl;
 
   ALGEBRA::Integrator<T, S> integrator(*model, time, 0.1, absolute_tolerance, max_nliter);
-
-  auto state = interface->states_.back();
+  auto state = interface->state_;
+  interface->state_ = integrator.step(state, time, *model);
   interface->time_step_ += 1;
 
-  if (interface->save_interval_counter_ == interface->output_interval_) {
-    interface->times_.push_back(time);
-    interface->states_.push_back(std::move(state));
-    interface->save_interval_counter_ = 0;
+  int state_size = state.y.size();
+  //std::cout << "[increment_time] state_size: " << state_size << std::endl;
+  //std::cout << "[increment_time] solution size: " << solution.size() << std::endl;
+
+  for (int i = 0; i < state.y.size(); i++) {
+    solution[i] = state.y[i];
   }
 }
